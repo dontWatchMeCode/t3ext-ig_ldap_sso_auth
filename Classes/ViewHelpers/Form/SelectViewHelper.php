@@ -14,29 +14,42 @@
 
 namespace Causal\IgLdapSsoAuth\ViewHelpers\Form;
 
+use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
+use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
+
+#TODO@gm: migrate to custom ViewHelper
+
 /**
  * This view helper generates a <select> dropdown list for the use with a form and supports the onchange attribute.
  */
-class SelectViewHelper extends \TYPO3\CMS\Fluid\ViewHelpers\Form\SelectViewHelper
+#class SelectViewHelper extends \TYPO3\CMS\Fluid\ViewHelpers\Form\SelectViewHelper
+#{
+#    /**
+#     * @var string
+#     */
+#    protected $tagName = 'select';
+#
+#    /**
+#     * @var mixed
+#     */
+#    protected $selectedValue = null;
+#
+#    /**
+#     * Initialize arguments.
+#     *
+#     * @api
+#     */
+#    public function initializeArguments()
+#    {
+#        parent::initializeArguments();
+#        $this->registerTagAttribute('onchange', 'string', 'Event when selection is changed');
+#    }
+#}
+
+class SelectViewHelper extends AbstractViewHelper
 {
-    /**
-     * @var string
-     */
-    protected $tagName = 'select';
-
-    /**
-     * @var mixed
-     */
-    protected $selectedValue = null;
-
-    /**
-     * Initialize arguments.
-     *
-     * @api
-     */
-    public function initializeArguments()
+    public static function renderStatic(array $arguments, \Closure $renderChildrenClosure, RenderingContextInterface $renderingContext)
     {
-        parent::initializeArguments();
-        $this->registerTagAttribute('onchange', 'string', 'Event when selection is changed');
+        return 'temp: renderStatic';
     }
 }

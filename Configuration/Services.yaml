@@ -1,4 +1,14 @@
 services:
-    Causal\IgLdapSsoAuth\Property\TypeConverter\ConfigurationConverter:
-        tags:
-            name: extbase.type_converter
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Causal\IgLdapSsoAuth\:
+    resource: "../Classes/*"
+    exclude: "../Classes/Domain/Model/*"
+
+  #TODO@gm: fix misses sources attribute
+#  Causal\IgLdapSsoAuth\Property\TypeConverter\ConfigurationConverter:
+#    tags:
+#      name: extbase.type_converter

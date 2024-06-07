@@ -19,6 +19,7 @@ use Causal\IgLdapSsoAuth\Domain\Repository\ConfigurationRepository;
 use TYPO3\CMS\Core\SingletonInterface;
 use TYPO3\CMS\Extbase\Property\PropertyMappingConfigurationInterface;
 use TYPO3\CMS\Extbase\Property\TypeConverter\AbstractTypeConverter;
+
 /**
  * Converter which transforms simple types to \Causal\IgLdapSsoAuth\Domain\Model\Configuration.
  */
