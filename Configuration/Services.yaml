@@ -1,0 +1,4 @@
+services:
+    Causal\IgLdapSsoAuth\Property\TypeConverter\ConfigurationConverter:
+        tags:
+            name: extbase.type_converter

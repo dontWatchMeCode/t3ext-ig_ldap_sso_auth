@@ -39,7 +39,7 @@ class Typo3GroupRepository
     public static function create(string $table): array
     {
         if (!GeneralUtility::inList('be_groups,fe_groups', $table)) {
-            throw new InvalidUserGroupTableException('Invalid table "' . $table . '"', 1404892331);
+            throw new InvalidUserGroupTableException('Invalid table "' . $table . '"', 1_404_892_331);
         }
 
         $newGroup = [];
@@ -63,8 +63,6 @@ class Typo3GroupRepository
      * Searches BE/FE groups either by uid or by DN in a given storage folder (pid).
      *
      * @param string $table Either 'be_groups' or 'fe_groups'
-     * @param int $uid
-     * @param int|null $pid
      * @param string $dn
      * @param string $groupName
      * @return null
@@ -78,7 +76,7 @@ class Typo3GroupRepository
     ): array
     {
         if (!GeneralUtility::inList('be_groups,fe_groups', $table)) {
-            throw new InvalidUserGroupTableException('Invalid table "' . $table . '"', 1404891809);
+            throw new InvalidUserGroupTableException('Invalid table "' . $table . '"', 1_404_891_809);
         }
 
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
@@ -90,24 +88,16 @@ class Typo3GroupRepository
         } else {
             $where = $queryBuilder->expr()->eq('tx_igldapssoauth_dn', $queryBuilder->createNamedParameter($dn, \PDO::PARAM_STR));
             if (!empty($groupName)) {
-                $where = $queryBuilder->expr()->orX(
-                    $where,
-                    $queryBuilder->expr()->eq('title', $queryBuilder->createNamedParameter($groupName, \PDO::PARAM_STR))
-                );
+                $where = $queryBuilder->expr()->or($where, $queryBuilder->expr()->eq('title', $queryBuilder->createNamedParameter($groupName, \PDO::PARAM_STR)));
             }
             if (!empty($pid)) {
-                $where = $queryBuilder->expr()->andX(
-                    $where,
-                    $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($pid, \PDO::PARAM_INT))
-                );
+                $where = $queryBuilder->expr()->and($where, $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($pid, \PDO::PARAM_INT)));
             }
         }
 
         $groups = $queryBuilder
             ->select('*')
-            ->from($table)
-            ->where($where)
-            ->execute()
+            ->from($table)->where($where)->executeQuery()
             ->fetchAllAssociative();
 
         // Return TYPO3 groups
@@ -119,14 +109,13 @@ class Typo3GroupRepository
      * with all columns.
      *
      * @param string $table Either 'be_groups' or 'fe_groups'
-     * @param array $data
      * @return array The new record
      * @throws InvalidUserGroupTableException
      */
     public static function add(string $table, array $data = []): array
     {
         if (!GeneralUtility::inList('be_groups,fe_groups', $table)) {
-            throw new InvalidUserGroupTableException('Invalid table "' . $table . '"', 1404891833);
+            throw new InvalidUserGroupTableException('Invalid table "' . $table . '"', 1_404_891_833);
         }
 
         $tableConnection = GeneralUtility::makeInstance(ConnectionPool::class)
@@ -148,7 +137,7 @@ class Typo3GroupRepository
             ->fetchAssociative();
 
         NotificationUtility::dispatch(
-            __CLASS__,
+            self::class,
             'groupAdded',
             [
                 'table' => $table,
@@ -163,14 +152,13 @@ class Typo3GroupRepository
      * Updates a BE/FE group in the database and returns a success flag.
      *
      * @param string $table Either 'be_groups' or 'fe_groups'
-     * @param array $data
      * @return bool true on success, otherwise false
      * @throws InvalidUserGroupTableException
      */
     public static function update(string $table, array $data = []): bool
     {
         if (!GeneralUtility::inList('be_groups,fe_groups', $table)) {
-            throw new InvalidUserGroupTableException('Invalid table "' . $table . '"', 1404891867);
+            throw new InvalidUserGroupTableException('Invalid table "' . $table . '"', 1_404_891_867);
         }
 
         $affectedRows = GeneralUtility::makeInstance(ConnectionPool::class)
@@ -186,7 +174,7 @@ class Typo3GroupRepository
 
         if ($success) {
             NotificationUtility::dispatch(
-                __CLASS__,
+                self::class,
                 'groupUpdated',
                 [
                     'table' => $table,

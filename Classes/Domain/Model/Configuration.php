@@ -21,7 +21,7 @@ namespace Causal\IgLdapSsoAuth\Domain\Model;
  * @package    TYPO3
  * @subpackage ig_ldap_sso_auth
  */
-class Configuration
+class Configuration implements \Stringable
 {
     /**
      * @var int The uid of the record. The uid is only unique in the context of the database table.
@@ -201,12 +201,10 @@ class Configuration
     /**
      * Reconstitutes a property. Only for internal use.
      *
-     * @param string $propertyName
-     * @param mixed $propertyValue
      * @return bool
      * @internal
      */
-    public function _setProperty(string $propertyName, $propertyValue): bool
+    public function _setProperty(string $propertyName, mixed $propertyValue): bool
     {
         if ($this->_hasProperty($propertyName)) {
             $this->{$propertyName} = $propertyValue;
@@ -218,7 +216,6 @@ class Configuration
     /**
      * Returns the property value of the given property name. Only for internal use.
      *
-     * @param string $propertyName
      * @return bool true bool true if the property exists, false  if it doesn't exist or null in case of an error.
      * @internal
      */
@@ -318,7 +315,6 @@ class Configuration
     }
 
     /**
-     * @param bool $ldapTlsReqcert
      * @return $this
      */
     public function setLdapTlsReqcert(bool $ldapTlsReqcert): self
@@ -492,8 +488,8 @@ class Configuration
      *
      * @return string
      */
-    public function __toString()
+    public function __toString(): string
     {
-        return get_class($this) . ':' . (string)$this->uid;
+        return static::class . ':' . (string)$this->uid;
     }
 }

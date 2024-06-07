@@ -14,6 +14,12 @@
 
 namespace Causal\IgLdapSsoAuth\Controller;
 
+use TYPO3\CMS\Core\Messaging\AbstractMessage;
+use TYPO3\CMS\Fluid\View\StandaloneView;
+use Causal\IgLdapSsoAuth\Utility\UserImportUtility;
+use Causal\IgLdapSsoAuth\Exception\InvalidUserGroupTableException;
+use TYPO3\CMS\Core\Imaging\IconFactory;
+use TYPO3\CMS\Core\Imaging\Icon;
 use Causal\IgLdapSsoAuth\Exception\InvalidHostnameException;
 use Causal\IgLdapSsoAuth\Exception\UnresolvedPhpDependencyException;
 use Causal\IgLdapSsoAuth\Utility\CompatUtility;
@@ -54,17 +60,11 @@ class ModuleController extends ActionController
      */
     protected $ldap;
 
-    /**
-     * @param ConfigurationRepository $configurationRepository
-     */
     public function injectConfigurationRepository(ConfigurationRepository $configurationRepository): void
     {
         $this->configurationRepository = $configurationRepository;
     }
 
-    /**
-     * @param Ldap $ldap
-     */
     public function injectLdap(Ldap $ldap): void
     {
         $this->ldap = $ldap;
@@ -98,20 +98,17 @@ class ModuleController extends ActionController
 
     /**
      * Index action.
-     *
-     * @param int $configuration
      */
-    public function indexAction(int $configuration = 0)
+    public function indexAction(int $configuration = 0): ResponseInterface
     {
         $configuration = $this->configurationRepository->findByUid($configuration);
         $this->saveState($configuration);
         $this->populateView($configuration);
+        return $this->htmlResponse();
     }
 
     /**
      * Status action.
-     *
-     * @param \Causal\IgLdapSsoAuth\Domain\Model\Configuration $configuration
      */
     public function statusAction(\Causal\IgLdapSsoAuth\Domain\Model\Configuration $configuration = null)
     {
@@ -137,7 +134,7 @@ class ModuleController extends ActionController
                 $this->addFlashMessage(
                     $e->getMessage(),
                     'Error ' . $e->getCode(),
-                    \TYPO3\CMS\Core\Messaging\FlashMessage::ERROR
+                    AbstractMessage::ERROR
                 );
             }
 
@@ -171,8 +168,6 @@ class ModuleController extends ActionController
 
     /**
      * Search action.
-     *
-     * @param \Causal\IgLdapSsoAuth\Domain\Model\Configuration $configuration
      */
     public function searchAction(\Causal\IgLdapSsoAuth\Domain\Model\Configuration $configuration = null)
     {
@@ -198,8 +193,6 @@ class ModuleController extends ActionController
 
     /**
      * Import frontend users action.
-     *
-     * @param \Causal\IgLdapSsoAuth\Domain\Model\Configuration $configuration
      */
     public function importFrontendUsersAction(\Causal\IgLdapSsoAuth\Domain\Model\Configuration $configuration = null)
     {
@@ -226,8 +219,6 @@ class ModuleController extends ActionController
 
     /**
      * Import backend users action.
-     *
-     * @param \Causal\IgLdapSsoAuth\Domain\Model\Configuration $configuration
      */
     public function importBackendUsersAction(\Causal\IgLdapSsoAuth\Domain\Model\Configuration $configuration = null)
     {
@@ -254,8 +245,6 @@ class ModuleController extends ActionController
 
     /**
      * Import frontend user groups action.
-     *
-     * @param \Causal\IgLdapSsoAuth\Domain\Model\Configuration $configuration
      */
     public function importFrontendUserGroupsAction(\Causal\IgLdapSsoAuth\Domain\Model\Configuration $configuration = null)
     {
@@ -282,8 +271,6 @@ class ModuleController extends ActionController
 
     /**
      * Import backend user groups action.
-     *
-     * @param \Causal\IgLdapSsoAuth\Domain\Model\Configuration $configuration
      */
     public function importBackendUserGroupsAction(\Causal\IgLdapSsoAuth\Domain\Model\Configuration $configuration = null)
     {
@@ -311,7 +298,6 @@ class ModuleController extends ActionController
     /**
      * Updates the search option using AJAX.
      *
-     * @param ServerRequestInterface $request
      * @return ResponseInterface
      */
     public function ajaxUpdateForm(ServerRequestInterface $request): ResponseInterface
@@ -327,7 +313,7 @@ class ModuleController extends ActionController
         }
 
         $configuration = $configurationRepository->findByUid($params['configuration']);
-        list($mode, $key) = explode('_', $params['type'], 2);
+        [$mode, $key] = explode('_', (string) $params['type'], 2);
 
         Configuration::initialize($mode, $configuration);
         $config = ($mode === 'be')
@@ -347,11 +333,11 @@ class ModuleController extends ActionController
     /**
      * Actual search action using AJAX.
      *
-     * @param ServerRequestInterface $request
      * @return ResponseInterface
      */
     public function ajaxSearch(ServerRequestInterface $request): ResponseInterface
     {
+        $objectManager = null;
         $params = $request->getQueryParams();
 
         $typoBranch = (new Typo3Version())->getBranch();
@@ -365,7 +351,7 @@ class ModuleController extends ActionController
         }
 
         $configuration = $configurationRepository->findByUid($params['configuration']);
-        list($mode, $key) = explode('_', $params['type'], 2);
+        [$mode, $key] = explode('_', (string) $params['type'], 2);
 
         Configuration::initialize($mode, $configuration);
         $config = ($mode === 'be')
@@ -374,16 +360,16 @@ class ModuleController extends ActionController
 
         try {
             $success = $ldap->connect(Configuration::getLdapConfiguration());
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             $success = false;
         }
 
         $template = GeneralUtility::getFileAbsFileName('EXT:ig_ldap_sso_auth/Resources/Private/Templates/Ajax/Search.html');
         $typoBranch = (new Typo3Version())->getBranch();
         if (version_compare($typoBranch, '11.5', '>=')) {
-            $view = GeneralUtility::makeInstance(\TYPO3\CMS\Fluid\View\StandaloneView::class);
+            $view = GeneralUtility::makeInstance(StandaloneView::class);
         } else {
-            $view = $objectManager->get(\TYPO3\CMS\Fluid\View\StandaloneView::class);
+            $view = $objectManager->get(StandaloneView::class);
         }
         $view->getRequest()->setControllerExtensionName('ig_ldap_sso_auth');
         $view->setFormat('html');
@@ -400,7 +386,7 @@ class ModuleController extends ActionController
                 $attributes = [];
             } else {
                 $attributes = Configuration::getLdapAttributes($config[$key]['mapping']);
-                if (strpos($config[$key]['filter'], '{USERUID}') !== false) {
+                if (str_contains((string) $config[$key]['filter'], '{USERUID}')) {
                     $attributes[] = 'uid';
                     $attributes = array_unique($attributes);
                 }
@@ -452,7 +438,6 @@ class ModuleController extends ActionController
     /**
      * Actual import of users using AJAX.
      *
-     * @param ServerRequestInterface $request
      * @return ResponseInterface
      */
     public function ajaxUsersImport(ServerRequestInterface $request): ResponseInterface
@@ -471,9 +456,9 @@ class ModuleController extends ActionController
 
         $configuration = $configurationRepository->findByUid($params['configuration']);
 
-        /** @var \Causal\IgLdapSsoAuth\Utility\UserImportUtility $importUtility */
+        /** @var UserImportUtility $importUtility */
         $importUtility = GeneralUtility::makeInstance(
-            \Causal\IgLdapSsoAuth\Utility\UserImportUtility::class,
+            UserImportUtility::class,
             $configuration,
             $params['mode']
         );
@@ -494,9 +479,9 @@ class ModuleController extends ActionController
         if ($success) {
             // If we assume that DN is
             // CN=Mustermann\, Max (LAN),OU=Users,DC=example,DC=com
-            list($filter, $baseDn) = Authentication::getRelativeDistinguishedNames($params['dn'], 2);
+            [$filter, $baseDn] = Authentication::getRelativeDistinguishedNames($params['dn'], 2);
             // ... we need to properly escape $filter "CN=Mustermann\, Max (LAN)" as "CN=Mustermann, Max \28LAN\29"
-            list($key, $value) = explode('=', $filter, 2);
+            [$key, $value] = explode('=', (string) $filter, 2);
             // 1) Unescape the comma
             $value = str_replace('\\', '', $value);
             // 2) Create a proper search filter
@@ -524,7 +509,6 @@ class ModuleController extends ActionController
     /**
      * Actual import of user groups using AJAX.
      *
-     * @param ServerRequestInterface $request
      * @return ResponseInterface
      */
     public function ajaxGroupsImport(ServerRequestInterface $request): ResponseInterface
@@ -558,7 +542,7 @@ class ModuleController extends ActionController
         }
 
         if ($success) {
-            list($filter, $baseDn) = explode(',', $params['dn'], 2);
+            [$filter, $baseDn] = explode(',', (string) $params['dn'], 2);
             $attributes = Configuration::getLdapAttributes($config['groups']['mapping']);
             $ldapGroup = $ldap->search($baseDn, '(' . $filter . ')', $attributes, true);
 
@@ -583,7 +567,7 @@ class ModuleController extends ActionController
 
             if (!empty($config['groups']['mapping']['parentGroup'])) {
                 $fieldParent = $config['groups']['mapping']['parentGroup'];
-                if (preg_match("`<([^$]*)>`", $fieldParent, $attribute)) {
+                if (preg_match("`<([^$]*)>`", (string) $fieldParent, $attribute)) {
                     $fieldParent = $attribute[1];
 
                     if (is_array($ldapGroup[$fieldParent])) {
@@ -613,12 +597,7 @@ class ModuleController extends ActionController
     /**
      * Sets the parent groups for a given TYPO3 user group record.
      *
-     * @param array $ldapParentGroups
-     * @param string $fieldParent
-     * @param int $childUid
-     * @param int $pid
-     * @param string $mode
-     * @throws \Causal\IgLdapSsoAuth\Exception\InvalidUserGroupTableException
+     * @throws InvalidUserGroupTableException
      */
     protected function setParentGroup(array $ldapParentGroups, string $fieldParent, int $childUid, int $pid, string $mode)
     {
@@ -690,15 +669,13 @@ class ModuleController extends ActionController
     /**
      * Returns the LDAP users with information merged with local TYPO3 users.
      *
-     * @param \Causal\IgLdapSsoAuth\Domain\Model\Configuration $configuration
-     * @param string $mode
      * @return array
      */
     protected function getAvailableUsers(\Causal\IgLdapSsoAuth\Domain\Model\Configuration $configuration, string $mode): array
     {
-        /** @var \Causal\IgLdapSsoAuth\Utility\UserImportUtility $importUtility */
+        /** @var UserImportUtility $importUtility */
         $importUtility = GeneralUtility::makeInstance(
-            \Causal\IgLdapSsoAuth\Utility\UserImportUtility::class,
+            UserImportUtility::class,
             $configuration,
             $mode
         );
@@ -758,7 +735,6 @@ class ModuleController extends ActionController
     /**
      * Returns the LDAP user groups with information merged with local TYPO3 user groups.
      *
-     * @param \Causal\IgLdapSsoAuth\Domain\Model\Configuration $configuration
      * @param string $mode
      * @return array
      */
@@ -811,8 +787,6 @@ class ModuleController extends ActionController
 
     /**
      * Populates the view with general objects.
-     *
-     * @param \Causal\IgLdapSsoAuth\Domain\Model\Configuration $configuration
      */
     protected function populateView(\Causal\IgLdapSsoAuth\Domain\Model\Configuration $configuration = null): void
     {
@@ -826,7 +800,7 @@ class ModuleController extends ActionController
         $editRecordModuleUrl = $uriBuilder->buildUriFromRoute('record_edit');
 
         if (empty($configurationRecords)) {
-            $newRecordUri = $editRecordModuleUrl . '&returnUrl=' . urlencode($thisUri) . '&edit[tx_igldapssoauth_config][0]=new';
+            $newRecordUri = $editRecordModuleUrl . '&returnUrl=' . urlencode((string) $thisUri) . '&edit[tx_igldapssoauth_config][0]=new';
 
             $message = $this->translate(
                 'configuration_missing.message',
@@ -838,16 +812,16 @@ class ModuleController extends ActionController
             $this->addFlashMessage(
                 $message,
                 $this->translate('configuration_missing.title'),
-                \TYPO3\CMS\Core\Messaging\FlashMessage::WARNING
+                AbstractMessage::WARNING
             );
         } else {
             if ($configuration == null) {
                 $configuration = $configurationRecords[0];
             }
-            $editUri = $editRecordModuleUrl . '&returnUrl=' . urlencode($thisUri) . '&edit[tx_igldapssoauth_config][' . $configuration->getUid() . ']=edit';
-            /** @var \TYPO3\CMS\Core\Imaging\IconFactory $iconFactory */
-            $iconFactory = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Imaging\IconFactory::class);
-            $icon = $iconFactory->getIcon('actions-document-open', \TYPO3\CMS\Core\Imaging\Icon::SIZE_SMALL)->render();
+            $editUri = $editRecordModuleUrl . '&returnUrl=' . urlencode((string) $thisUri) . '&edit[tx_igldapssoauth_config][' . $configuration->getUid() . ']=edit';
+            /** @var IconFactory $iconFactory */
+            $iconFactory = GeneralUtility::makeInstance(IconFactory::class);
+            $icon = $iconFactory->getIcon('actions-document-open', Icon::SIZE_SMALL)->render();
             $editLink = sprintf(
                 ' <a href="%s" title="uid=%s" class="btn btn-default btn-sm" style="vertical-align: inherit;">' . $icon . '</a>',
                 $editUri,
@@ -919,14 +893,14 @@ class ModuleController extends ActionController
             $this->addFlashMessage(
                 $e->getMessage(),
                 'Error ' . $e->getCode(),
-                \TYPO3\CMS\Core\Messaging\FlashMessage::ERROR
+                AbstractMessage::ERROR
             );
             return false;
         } catch (InvalidHostnameException $e) {
             $this->addFlashMessage(
                 $e->getMessage(),
                 'Error ' . $e->getCode(),
-                \TYPO3\CMS\Core\Messaging\FlashMessage::ERROR
+                AbstractMessage::ERROR
             );
             return false;
         }
@@ -936,8 +910,6 @@ class ModuleController extends ActionController
     /**
      * Translates a label.
      *
-     * @param string $id
-     * @param array $arguments
      * @return string
      */
     protected function translate(string $id, array $arguments = null): string
@@ -948,8 +920,6 @@ class ModuleController extends ActionController
 
     /**
      * Saves current state.
-     *
-     * @param \Causal\IgLdapSsoAuth\Domain\Model\Configuration $configuration
      */
     protected function saveState(\Causal\IgLdapSsoAuth\Domain\Model\Configuration $configuration = null)
     {

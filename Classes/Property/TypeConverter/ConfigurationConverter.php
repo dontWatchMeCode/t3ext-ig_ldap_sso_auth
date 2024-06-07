@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the TYPO3 CMS project.
  *
@@ -11,7 +12,6 @@
  *
  * The TYPO3 project - inspiring people to share!
  */
-
 namespace Causal\IgLdapSsoAuth\Property\TypeConverter;
 
 use Causal\IgLdapSsoAuth\Domain\Model\Configuration;
@@ -19,41 +19,31 @@ use Causal\IgLdapSsoAuth\Domain\Repository\ConfigurationRepository;
 use TYPO3\CMS\Core\SingletonInterface;
 use TYPO3\CMS\Extbase\Property\PropertyMappingConfigurationInterface;
 use TYPO3\CMS\Extbase\Property\TypeConverter\AbstractTypeConverter;
-
 /**
  * Converter which transforms simple types to \Causal\IgLdapSsoAuth\Domain\Model\Configuration.
  */
 class ConfigurationConverter extends AbstractTypeConverter implements SingletonInterface
 {
-
     /**
      * @var array<string>
      */
     protected $sourceTypes = ['integer', 'string'];
-
     /**
      * @var string
      */
     protected $targetType = Configuration::class;
-
     /**
      * @var int
      */
     protected $priority = 10;
-
     /**
      * @var ConfigurationRepository
      */
     protected $configurationRepository;
-
-    /**
-     * @param ConfigurationRepository $configurationRepository
-     */
     public function injectConfigurationRepository(ConfigurationRepository $configurationRepository): void
     {
         $this->configurationRepository = $configurationRepository;
     }
-
     /**
      * @param string|int $source TODO: should actually be type-hinted as int
      * @param string $targetType
@@ -61,13 +51,8 @@ class ConfigurationConverter extends AbstractTypeConverter implements SingletonI
      * @param PropertyMappingConfigurationInterface|null $configuration
      * @return Configuration|null
      */
-    public function convertFrom(
-        $source,
-        string $targetType,
-        array $convertedChildProperties = [],
-        ?PropertyMappingConfigurationInterface $configuration = null
-    ): ?Configuration
+    public function convertFrom($source, string $targetType, array $convertedChildProperties = [], ?PropertyMappingConfigurationInterface $configuration = null): ?Configuration
     {
-        return $this->configurationRepository->findByUid((int)$source);
+        return $this->configurationRepository->findByUid((int) $source);
     }
 }

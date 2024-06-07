@@ -22,7 +22,7 @@ final class CompatUtility
 {
     public static function getTypo3Mode(): ?string
     {
-        if (defined('TYPO3_MODE')) {
+        if (defined('TYPO3')) {
             return TYPO3_MODE;
         }
 

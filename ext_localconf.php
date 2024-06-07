@@ -1,9 +1,9 @@
 <?php
-defined('TYPO3_MODE') || defined('TYPO3') || die();
+defined('TYPO3') || defined('TYPO3') || die();
 
 (static function (string $_EXTKEY) {
     // Configuration of authentication service
-    $EXT_CONFIG = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS'][$_EXTKEY] ?? [];
+    $EXT_CONFIG = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['ig_ldap_sso_auth'] ?? [];
 
     // SSO configuration
     if ($EXT_CONFIG['enableFESSO'] ?? false) {
@@ -42,14 +42,14 @@ defined('TYPO3_MODE') || defined('TYPO3') || die();
 
     // Register the import users Scheduler task
     $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['scheduler']['tasks'][\Causal\IgLdapSsoAuth\Task\ImportUsers::class] = [
-        'extension' => $_EXTKEY,
-        'title' => 'LLL:EXT:' . $_EXTKEY . '/Resources/Private/Language/locallang.xlf:task.import_users.title',
-        'description' => 'LLL:EXT:' . $_EXTKEY . '/Resources/Private/Language/locallang.xlf:task.import_users.description',
+        'extension' => 'ig_ldap_sso_auth',
+        'title' => 'LLL:EXT:' . 'ig_ldap_sso_auth' . '/Resources/Private/Language/locallang.xlf:task.import_users.title',
+        'description' => 'LLL:EXT:' . 'ig_ldap_sso_auth' . '/Resources/Private/Language/locallang.xlf:task.import_users.description',
         'additionalFields' => \Causal\IgLdapSsoAuth\Task\ImportUsersAdditionalFields::class
     ];
 
     \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addService(
-        $_EXTKEY,
+        'ig_ldap_sso_auth',
         'auth' /* sv type */,
         \Causal\IgLdapSsoAuth\Service\AuthenticationService::class, /* sv key */
         [
@@ -69,14 +69,11 @@ defined('TYPO3_MODE') || defined('TYPO3') || die();
         ]
     );
 
-    $GLOBALS['TYPO3_CONF_VARS']['SYS']['formEngine']['nodeRegistry'][1553520893] = [
+    $GLOBALS['TYPO3_CONF_VARS']['SYS']['formEngine']['nodeRegistry'][1_553_520_893] = [
         'nodeName' => 'ldapSuggest',
         'priority' => 40,
         'class' => \Causal\IgLdapSsoAuth\Form\Element\LdapSuggestElement::class,
     ];
-
-    // Register type converters
-    \TYPO3\CMS\Extbase\Utility\ExtensionUtility::registerTypeConverter(\Causal\IgLdapSsoAuth\Property\TypeConverter\ConfigurationConverter::class);
 
     // User have save doc new button
     \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addUserTSConfig('options.saveDocNew.tx_igldapssoauth_config=1');
